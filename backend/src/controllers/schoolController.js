@@ -17,7 +17,7 @@ exports.addSchool = (req, res) => {
 };
 
 exports.listSchools = (req, res) => {
-  const { latitude, longitude } = req.query;
+  const { latitude, longitude, radius = 10 } = req.query; // Default radius 10 km
 
   if (!latitude || !longitude) {
     return res.status(400).json({ message: "Latitude and Longitude are required" });
@@ -30,14 +30,16 @@ exports.listSchools = (req, res) => {
 
     const userLat = parseFloat(latitude);
     const userLon = parseFloat(longitude);
+    const maxDistance = parseFloat(radius);
 
-    const sortedSchools = results
+    const filteredSchools = results
       .map((school) => ({
         ...school,
         distance: haversineDistance(userLat, userLon, school.latitude, school.longitude),
       }))
+      .filter((school) => school.distance <= maxDistance) // Only return schools within the radius
       .sort((a, b) => a.distance - b.distance);
 
-    res.status(200).json(sortedSchools);
+    res.status(200).json(filteredSchools);
   });
 };
